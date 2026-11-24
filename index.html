@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#05080a" />
+    <title>BUFFER 600 — 해월호텔 야간 관제 기록</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="viewport">
+      <div id="stage">
+        <!-- ===== 타이틀 화면 ===== -->
+        <section id="boot" class="screen">
+          <canvas id="boot-bg" width="1024" height="576"></canvas>
+          <div class="boot-inner">
+            <div class="boot-logo">
+              <span class="boot-rec">● REC</span>
+              <h1>BUFFER <em>600</em></h1>
+              <p class="boot-sub">해월호텔 야간 관제 기록</p>
+            </div>
+            <div class="boot-brief">
+              <p>영업 종료를 일주일 앞둔 해월호텔.</p>
+              <p>오늘은 당신의 야간 관제 근무 첫날입니다.</p>
+              <p>카메라는 여덟 대, 모니터는 <b>두 대</b>뿐입니다.</p>
+              <p>06:00까지 이상한 일이 있었다면 보고서를 제출하세요.</p>
+            </div>
+            <div class="boot-actions">
+              <button id="btn-start" class="btn-primary">근무 시작</button>
+              <p class="boot-tip">
+                🎧 소리를 켜고 플레이하는 것을 권장합니다 · 플레이 시간 약 20분
+                · 한 번뿐인 밤
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 상단바 ===== -->
+        <header id="topbar">
+          <div class="tb-left">
+            <span class="tb-logo">◈</span>
+            <span class="tb-title"
+              >HAEWOL NIGHTWATCH <small>VMS 3.2</small></span
+            >
+          </div>
+          <div class="tb-center">
+            <span class="tb-rec"><i></i>REC</span>
+            <span id="tb-buffer" class="tb-buffer">OUTPUT BUFFER 600s</span>
+          </div>
+          <div class="tb-right">
+            <span class="tb-user">근무자 <b>윤재</b> · 1일 차</span>
+            <span id="tb-clock" class="tb-clock">01:05:00</span>
+            <button id="btn-pause" class="tb-btn" title="일시정지">❚❚</button>
+          </div>
+        </header>
+
+        <!-- ===== 카메라 목록 ===== -->
+        <aside id="sidebar">
+          <div class="sb-head">CAMERAS <span>8</span></div>
+          <ul id="cam-list"></ul>
+          <div class="sb-monitor-pick">
+            <div class="sb-head">출력 모니터</div>
+            <div class="sb-pick">
+              <button data-mon="0" class="mon-pick active">A</button>
+              <button data-mon="1" class="mon-pick">B</button>
+            </div>
+            <p class="sb-hint">카메라를 누르면 선택한 모니터에 연결됩니다.</p>
+          </div>
+        </aside>
+
+        <!-- ===== 데스크톱 ===== -->
+        <main id="desktop">
+          <div class="desk-wallpaper">
+            <span>해월호텔</span>
+            <small>HAEWOL HOTEL · SINCE 1987</small>
+          </div>
+
+          <!-- 모니터 A / B -->
+          <div
+            class="win monitor"
+            id="mon-0"
+            data-win="mon-0"
+            style="left: 8px; top: 8px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">▣</span
+              ><span class="wt-text"
+                >모니터 A — <b class="mon-cam">신호 없음</b></span
+              ><span class="mon-live">LIVE</span>
+            </div>
+            <div class="mon-body">
+              <canvas width="640" height="360"></canvas>
+            </div>
+            <div class="mon-tools">
+              <button class="mt-cap" data-mon="0">📷 캡처</button>
+              <button class="mt-play" data-mon="0">
+                ⏪ 이 카메라 다시 보기
+              </button>
+              <span class="mt-cap-count"></span>
+            </div>
+          </div>
+          <div
+            class="win monitor"
+            id="mon-1"
+            data-win="mon-1"
+            style="left: 436px; top: 8px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">▣</span
+              ><span class="wt-text"
+                >모니터 B — <b class="mon-cam">신호 없음</b></span
+              ><span class="mon-live">LIVE</span>
+            </div>
+            <div class="mon-body">
+              <canvas width="640" height="360"></canvas>
+            </div>
+            <div class="mon-tools">
+              <button class="mt-cap" data-mon="1">📷 캡처</button>
+              <button class="mt-play" data-mon="1">
+                ⏪ 이 카메라 다시 보기
+              </button>
+              <span class="mt-cap-count"></span>
+            </div>
+          </div>
+
+          <!-- 다시 보기 -->
+          <div
+            class="win app hidden"
+            id="win-playback"
+            data-win="playback"
+            style="left: 150px; top: 40px; width: 560px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">⏪</span
+              ><span class="wt-text">녹화 다시 보기</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body pb">
+              <div class="pb-row">
+                <label
+                  >카메라
+                  <select id="pb-cam"></select
+                ></label>
+                <label
+                  >시작
+                  <input
+                    id="pb-time"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="1"
+                    value="0"
+                /></label>
+                <span id="pb-time-label" class="mono">--:--</span>
+              </div>
+              <div class="pb-screen">
+                <canvas id="pb-canvas" width="640" height="360"></canvas>
+                <div id="pb-overlay">재생 대기</div>
+              </div>
+              <div class="pb-row">
+                <button id="pb-play" class="btn">▶ 재생 (1회 사용)</button>
+                <button id="pb-pause" class="btn" disabled>❚❚</button>
+                <button id="pb-cap" class="btn" disabled>📷 캡처</button>
+                <span class="pb-credit"
+                  >남은 재생 <b id="pb-credits">3</b> / 3</span
+                >
+              </div>
+              <p class="win-note">
+                녹화 타임스탬프는 <b>출력 시각</b> 기준으로 찍힙니다. 한 번
+                재생하면 10분 분량을 볼 수 있습니다.
+              </p>
+            </div>
+          </div>
+
+          <!-- 타임라인 보드 -->
+          <div
+            class="win app hidden"
+            id="win-timeline"
+            data-win="timeline"
+            style="left: 60px; top: 60px; width: 640px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">▤</span
+              ><span class="wt-text">타임라인 보드</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body">
+              <p class="win-note">
+                캡처한 장면이 화면 시각 순서대로 정리됩니다. 카드를 눌러 메모를
+                남길 수 있어요.
+              </p>
+              <div id="tl-board" class="tl-board">
+                <p class="empty">아직 캡처한 장면이 없습니다.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 출입 기록 -->
+          <div
+            class="win app hidden"
+            id="win-access"
+            data-win="access"
+            style="left: 520px; top: 70px; width: 420px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">⌸</span
+              ><span class="wt-text">출입 통제 기록 — ACS</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body">
+              <p class="win-note">카드 단말기 서버 시각 기준 (NTP 동기화됨)</p>
+              <table class="log-table">
+                <thead>
+                  <tr>
+                    <th>시각</th>
+                    <th>위치</th>
+                    <th>내용</th>
+                  </tr>
+                </thead>
+                <tbody id="access-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 무전 -->
+          <div
+            class="win app hidden"
+            id="win-radio"
+            data-win="radio"
+            style="left: 560px; top: 260px; width: 400px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">⌁</span
+              ><span class="wt-text">무전 · 내선 기록</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body">
+              <ul id="radio-log" class="radio-log"></ul>
+            </div>
+          </div>
+
+          <!-- 투숙객 명부 -->
+          <div
+            class="win app hidden"
+            id="win-guests"
+            data-win="guests"
+            style="left: 120px; top: 30px; width: 600px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">☷</span
+              ><span class="wt-text">투숙객 · 근무자 명부</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body">
+              <div id="guest-grid" class="guest-grid"></div>
+            </div>
+          </div>
+
+          <!-- 근무일지 -->
+          <div
+            class="win app hidden"
+            id="win-journal"
+            data-win="journal"
+            style="left: 200px; top: 50px; width: 460px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">✎</span
+              ><span class="wt-text">근무일지.txt — 메모장</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body notepad">
+              <pre id="journal-old"></pre>
+              <div class="jn-today">
+                <span class="mono">[11/24] 윤재:</span>
+                <textarea
+                  id="journal-input"
+                  placeholder="여기에 메모를 남길 수 있습니다…"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 설정 -->
+          <div
+            class="win app hidden"
+            id="win-settings"
+            data-win="settings"
+            style="left: 300px; top: 90px; width: 420px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">⚙</span
+              ><span class="wt-text">시스템 설정</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body settings">
+              <div class="set-row">
+                <div>
+                  <b>영상 출력 버퍼</b>
+                  <p>네트워크 끊김 방지용 지연 출력</p>
+                  <p class="set-meta">
+                    마지막 변경: <span class="mono">kang_dh</span> · 11/17 23:58
+                  </p>
+                </div>
+                <div class="seg" id="seg-buffer">
+                  <button data-buf="0">0초</button>
+                  <button data-buf="600" class="active">600초</button>
+                </div>
+              </div>
+              <div class="set-row">
+                <div>
+                  <b>소리</b>
+                  <p>환경음 · 무전 · 효과음</p>
+                </div>
+                <div class="seg" id="seg-sound">
+                  <button data-snd="1" class="active">켜기</button>
+                  <button data-snd="0">끄기</button>
+                </div>
+              </div>
+              <div class="set-row">
+                <div>
+                  <b>화면 노이즈 효과</b>
+                  <p>저사양 기기에서는 끄세요</p>
+                </div>
+                <div class="seg" id="seg-fx">
+                  <button data-fx="1" class="active">켜기</button>
+                  <button data-fx="0">끄기</button>
+                </div>
+              </div>
+              <div class="set-row">
+                <div>
+                  <b>녹화 타임스탬프</b>
+                  <p>출력 시각 기준 (변경 불가)</p>
+                </div>
+                <span class="mono dim">LOCKED</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 보고서 -->
+          <div
+            class="win app hidden"
+            id="win-report"
+            data-win="report"
+            style="left: 240px; top: 30px; width: 460px"
+          >
+            <div class="win-title">
+              <span class="wt-icon">▧</span
+              ><span class="wt-text">야간 이상 보고서</span
+              ><button class="win-close">✕</button>
+            </div>
+            <div class="win-body report">
+              <label class="rp-row"
+                >수신
+                <select id="rp-to">
+                  <option value="manager">지배인 강도현 (기본)</option>
+                  <option value="police">해월경찰서 112 상황실</option>
+                </select>
+              </label>
+              <label class="rp-row"
+                >누가
+                <input
+                  id="rp-who"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="이름 또는 계정"
+              /></label>
+              <label class="rp-row"
+                >어디서
+                <input
+                  id="rp-where"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="장소"
+              /></label>
+              <label class="rp-row"
+                >언제
+                <input
+                  id="rp-when"
+                  type="text"
+                  autocomplete="off"
+                  inputmode="numeric"
+                  placeholder="HH:MM"
+              /></label>
+              <label class="rp-row top"
+                >무슨 일
+                <textarea
+                  id="rp-what"
+                  placeholder="자유롭게 적으세요 (채점하지 않음)"
+                ></textarea>
+              </label>
+              <div class="rp-foot">
+                <span id="rp-msg" class="rp-msg"></span>
+                <span class="rp-left">남은 제출 <b id="rp-left">3</b></span>
+                <button id="rp-submit" class="btn-primary small">제출</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="toasts"></div>
+        </main>
+
+        <!-- ===== 작업표시줄 ===== -->
+        <footer id="taskbar">
+          <button class="tk-start">◈</button>
+          <div class="tk-apps">
+            <button data-open="playback"><i>⏪</i>다시 보기</button>
+            <button data-open="timeline"><i>▤</i>타임라인</button>
+            <button data-open="access"><i>⌸</i>출입 기록</button>
+            <button data-open="radio">
+              <i>⌁</i>무전<span class="badge hidden" id="radio-badge">0</span>
+            </button>
+            <button data-open="guests"><i>☷</i>명부</button>
+            <button data-open="journal"><i>✎</i>근무일지</button>
+            <button data-open="settings"><i>⚙</i>설정</button>
+            <button data-open="report" class="tk-report"><i>▧</i>보고서</button>
+          </div>
+          <div class="tk-tray">
+            <span id="tk-radio-led" class="led"></span>
+            <span id="tk-clock" class="mono">01:05</span>
+          </div>
+        </footer>
+
+        <!-- ===== 일시정지 ===== -->
+        <section id="pause" class="screen hidden">
+          <div class="pause-box">
+            <h2>일시정지</h2>
+            <p>시계가 멈췄습니다. 하지만 밤은 기다려 주지 않을지도 모릅니다.</p>
+            <button id="btn-resume" class="btn-primary">계속</button>
+          </div>
+        </section>
+
+        <!-- ===== 엔딩 ===== -->
+        <section id="ending" class="screen hidden">
+          <canvas id="ending-cam" width="640" height="360"></canvas>
+          <div class="ending-text" id="ending-text"></div>
+          <div class="ending-foot hidden" id="ending-foot">
+            <p class="ending-name" id="ending-name"></p>
+            <button id="btn-restart" class="btn-primary small">처음부터</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="rotate-hint">📱 가로로 돌리면 더 크게 볼 수 있어요</div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
